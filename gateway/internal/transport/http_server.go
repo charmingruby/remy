@@ -1,21 +1,24 @@
 package transport
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func NewHTTPServer(mux *http.ServeMux, addr string) *HTTPServer {
 	return &HTTPServer{
-		mux:  mux,
-		addr: addr,
+		Server: &http.Server{
+			Addr:    addr,
+			Handler: mux,
+		},
 	}
 }
 
 type HTTPServer struct {
-	mux  *http.ServeMux
-	addr string
+	Server *http.Server
 }
 
 func (s *HTTPServer) Run() error {
-	if err := http.ListenAndServe(s.addr, s.mux); err != nil {
+	if err := http.ListenAndServe(s.Server.Addr, s.Server.Handler); err != nil {
 		return err
 	}
 

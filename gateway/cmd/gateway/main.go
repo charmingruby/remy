@@ -1,8 +1,12 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	_ "github.com/joho/godotenv/autoload"
 
@@ -18,9 +22,19 @@ func main() {
 	restHandler := rest.NewHandler(mux)
 	restHandler.Register()
 
-	server := transport.NewHTTPServer(mux, httpAddr)
+	srv := transport.NewHTTPServer(mux, httpAddr)
 	log.Printf("Starting HTTP server at %s", httpAddr)
-	if err := server.Run(); err != nil {
+	if err := srv.Run(); err != nil {
 		log.Fatal("Failed to start http server")
 	}
+
+	// gracefull shutdown
+	term := make(chan os.Signal, 1)
+	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-term
+		if err := srv.Server.Close(); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Error closing Server: %v", err)
+		}
+	}()
 }
