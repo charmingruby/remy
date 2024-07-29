@@ -1,43 +1,59 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	_ "github.com/joho/godotenv/autoload"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	common "github.com/charmingruby/remy-common"
+	"github.com/charmingruby/remy-common/discovery"
+	"github.com/charmingruby/remy-common/discovery/consul"
+	"github.com/charmingruby/remy-gateway/internal/gateway"
 	"github.com/charmingruby/remy-gateway/internal/transport"
-	"github.com/charmingruby/remy-gateway/internal/transport/grpc_transport"
 	"github.com/charmingruby/remy-gateway/internal/transport/rest_transport"
 )
 
 var (
-	httpAddr         = common.EnvString("HTTP_ADDR", ":8080")
-	orderServiceAddr = common.EnvString("GRPC_ADDR", "localhost:2000")
+	serviceName = "gateway"
+	httpAddr    = common.EnvString("HTTP_ADDR", ":8080")
+	consulAddr  = common.EnvString("CONSUL_ADDR", "localhost:8500")
 )
 
 func main() {
-	conn, err := grpc.Dial(
-		orderServiceAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	registry, err := consul.NewRegistry(consulAddr, serviceName)
 	if err != nil {
-		log.Fatalf("Failed to dial gRPC server: %v", err)
+		panic(err)
 	}
-	defer conn.Close()
-	log.Println("Dialing orders service at ", orderServiceAddr)
 
-	grpcHandler := grpc_transport.NewHandler(conn)
+	ctx := context.Background()
+	instanceID := discovery.GenerateInstanceID(serviceName)
+	if err := registry.Register(ctx, instanceID, serviceName, httpAddr); err != nil {
+		panic(err)
+	}
+
+	go func() {
+		for {
+			if err := registry.HealthCheck(instanceID, serviceName); err != nil {
+				log.Fatal("Failed to health check")
+			}
+
+			time.Sleep(time.Second * 1)
+		}
+	}()
+	defer registry.Deregister(ctx, instanceID, serviceName)
 
 	mux := http.NewServeMux()
-	restHandler := rest_transport.NewHandler(mux, grpcHandler)
+
+	ordersGateway := gateway.NewGRPCGateway(registry)
+
+	restHandler := rest_transport.NewHandler(mux, ordersGateway)
 	restHandler.Register()
 
 	srv := transport.NewHTTPServer(mux, httpAddr)

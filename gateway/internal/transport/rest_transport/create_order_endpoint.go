@@ -27,7 +27,7 @@ func (h *Handler) handleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		Items:      items,
 	}
 
-	order, err := h.grpcHandler.CreateOrderService(r.Context(), &input)
+	order, err := h.ordersGateway.CreateOrderService(r.Context(), &input)
 	if err != nil {
 		if isPayloadErr := errors.Is(err, common.NewPayloadErr(err.Error())); isPayloadErr {
 			common.WriteError(w, http.StatusBadRequest, err.Error())

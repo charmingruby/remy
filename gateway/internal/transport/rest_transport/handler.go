@@ -3,19 +3,19 @@ package rest_transport
 import (
 	"net/http"
 
-	"github.com/charmingruby/remy-gateway/internal/transport/grpc_transport"
+	"github.com/charmingruby/remy-gateway/internal/gateway"
 )
 
-func NewHandler(mux *http.ServeMux, grpcHandler *grpc_transport.Handler) *Handler {
+func NewHandler(mux *http.ServeMux, ordersGateway gateway.OrdersGateway) *Handler {
 	return &Handler{
-		mux:         mux,
-		grpcHandler: grpcHandler,
+		mux:           mux,
+		ordersGateway: ordersGateway,
 	}
 }
 
 type Handler struct {
-	mux         *http.ServeMux
-	grpcHandler *grpc_transport.Handler
+	mux           *http.ServeMux
+	ordersGateway gateway.OrdersGateway
 }
 
 func (h *Handler) Register() {
