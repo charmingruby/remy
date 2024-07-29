@@ -1,0 +1,15 @@
+@gatewayUrl = http://localhost:3000/api
+
+# @name create_order
+POST {{gatewayUrl}}/customers/2/orders
+Content-Type: application/json
+
+[
+    {
+        "ID": "1",
+        "Quantity": 1
+    }
+]
+
+
+###
