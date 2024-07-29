@@ -8,8 +8,15 @@ Content-Type: application/json
     {
         "ID": "1",
         "Quantity": 1
+    },
+     {
+        "ID": "2",
+        "Quantity": 1
+    },
+     {
+        "ID": "1",
+        "Quantity": 3
     }
 ]
-
 
 ###

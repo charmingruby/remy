@@ -1,21 +1,24 @@
 package order
 
 import (
-	"github.com/charmingruby/remy-orders/internal/order/domain"
+	"github.com/charmingruby/remy-orders/internal/order/contract"
+	"github.com/charmingruby/remy-orders/internal/order/service"
 	"github.com/charmingruby/remy-orders/internal/order/transport/grpc_transport"
 	"google.golang.org/grpc"
 )
 
-func NewServiceRegistry(svc domain.Service) *ServiceRegistry {
+func NewServiceRegistry(orderRepo contract.OrderRepository) *ServiceRegistry {
+	orderSvc := service.NewServiceRegistry(orderRepo)
+
 	return &ServiceRegistry{
-		service: svc,
+		OrderService: orderSvc,
 	}
 }
 
 type ServiceRegistry struct {
-	service domain.Service
+	OrderService contract.OrderService
 }
 
-func NewGRPCHandler(grpcServer *grpc.Server) {
-	grpc_transport.NewGRPCHandler(grpcServer)
+func NewGRPCHandler(grpcServer *grpc.Server, orderSvc contract.OrderService) {
+	grpc_transport.NewGRPCHandler(grpcServer, orderSvc)
 }

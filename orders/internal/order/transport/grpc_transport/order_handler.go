@@ -5,18 +5,23 @@ import (
 	"log"
 
 	pb "github.com/charmingruby/remy-common/api"
+	"github.com/charmingruby/remy-orders/internal/order/contract"
 )
 
 type gRPCOrderHandler struct {
 	pb.UnimplementedOrderServiceServer
+
+	service contract.OrderService
 }
 
-func (h *gRPCOrderHandler) CreateOrder(context.Context, *pb.CreateOrderRequest) (*pb.Order, error) {
-	log.Println("New order received")
+func (h *gRPCOrderHandler) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*pb.Order, error) {
+	log.Printf("New order received! Order %v\n", p)
 
-	o := &pb.Order{
-		ID: "42",
+	order := &pb.Order{
+		ID: "2",
 	}
 
-	return o, nil
+	h.service.CreateOrderService(ctx, p)
+
+	return order, nil
 }
