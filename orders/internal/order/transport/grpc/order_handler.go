@@ -1,4 +1,4 @@
-package grpc_transport
+package grpc
 
 import (
 	"context"

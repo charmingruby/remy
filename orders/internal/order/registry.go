@@ -3,7 +3,7 @@ package order
 import (
 	"github.com/charmingruby/remy-orders/internal/order/contract"
 	"github.com/charmingruby/remy-orders/internal/order/service"
-	"github.com/charmingruby/remy-orders/internal/order/transport/grpc_transport"
+	grpcTransport "github.com/charmingruby/remy-orders/internal/order/transport/grpc"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
 )
@@ -16,5 +16,5 @@ func NewServiceRegistry(orderRepo contract.OrderRepository) contract.OrderServic
 type ServiceRegistry struct{}
 
 func NewGRPCHandler(grpcServer *grpc.Server, orderSvc contract.OrderService, ch *amqp.Channel) {
-	grpc_transport.NewGRPCHandler(grpcServer, orderSvc, ch)
+	grpcTransport.NewGRPCHandler(grpcServer, orderSvc, ch)
 }
