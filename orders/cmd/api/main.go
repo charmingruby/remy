@@ -6,6 +6,7 @@ import (
 	"time"
 
 	common "github.com/charmingruby/remy-common"
+	"github.com/charmingruby/remy-common/broker"
 	"github.com/charmingruby/remy-common/discovery"
 	"github.com/charmingruby/remy-common/discovery/consul"
 	"github.com/charmingruby/remy-orders/internal/common/server"
@@ -14,9 +15,13 @@ import (
 )
 
 var (
-	serviceName = "orders"
-	grpcAddr    = common.EnvString("GRPC_ADDR", "localhost:2000")
-	consulAddr  = common.EnvString("CONSUL_ADDR", "localhost:8500")
+	serviceName  = "orders"
+	grpcAddr     = common.EnvString("GRPC_ADDR", "localhost:2000")
+	consulAddr   = common.EnvString("CONSUL_ADDR", "localhost:8500")
+	amqpUser     = common.EnvString("RABBITMQ_USER", "guest")
+	amqpPassword = common.EnvString("RABBITMQ_PASSWORD", "guest")
+	amqpHost     = common.EnvString("RABBITMQ_HOST", "localhost")
+	amqpPort     = common.EnvString("RABBITMQ_PORT", "5672")
 )
 
 func main() {
@@ -42,10 +47,16 @@ func main() {
 	}()
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
+	ch, close := broker.Connect(amqpUser, amqpPassword, amqpHost, amqpPort)
+	defer func() {
+		close()
+		ch.Close()
+	}()
+
 	server := server.NewServer(grpcAddr)
 	orderRepository := mongo_repository.NewOrderMongoRepository()
 	orderService := order.NewServiceRegistry(orderRepository)
-	order.NewGRPCHandler(server.GRPCServer, orderService.OrderService)
+	order.NewGRPCHandler(server.GRPCServer, orderService, ch)
 
 	listener, err := server.Run()
 	if err != nil {
