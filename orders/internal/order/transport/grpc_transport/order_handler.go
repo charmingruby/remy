@@ -21,7 +21,9 @@ func (h *gRPCOrderHandler) CreateOrder(ctx context.Context, p *pb.CreateOrderReq
 		ID: "2",
 	}
 
-	h.service.CreateOrderService(ctx, p)
+	if err := h.service.CreateOrderService(ctx, p); err != nil {
+		return nil, err
+	}
 
 	return order, nil
 }

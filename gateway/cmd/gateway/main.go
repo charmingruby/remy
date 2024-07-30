@@ -17,7 +17,7 @@ import (
 	"github.com/charmingruby/remy-common/discovery/consul"
 	"github.com/charmingruby/remy-gateway/internal/gateway"
 	"github.com/charmingruby/remy-gateway/internal/transport"
-	"github.com/charmingruby/remy-gateway/internal/transport/rest_transport"
+	"github.com/charmingruby/remy-gateway/internal/transport/rest"
 )
 
 var (
@@ -53,7 +53,7 @@ func main() {
 
 	ordersGateway := gateway.NewGRPCGateway(registry)
 
-	restHandler := rest_transport.NewHandler(mux, ordersGateway)
+	restHandler := rest.NewHandler(mux, ordersGateway)
 	restHandler.Register()
 
 	srv := transport.NewHTTPServer(mux, httpAddr)
