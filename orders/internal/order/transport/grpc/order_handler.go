@@ -21,16 +21,13 @@ type gRPCOrderHandler struct {
 func (h *gRPCOrderHandler) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*pb.Order, error) {
 	log.Printf("New order received! Order %v\n", p)
 
-	order := &pb.Order{
-		ID: "2",
-	}
-
-	jsonOrder, err := json.Marshal(order)
+	order, err := h.service.CreateOrderService(ctx, p)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := h.service.CreateOrderService(ctx, p); err != nil {
+	jsonOrder, err := json.Marshal(order)
+	if err != nil {
 		return nil, err
 	}
 

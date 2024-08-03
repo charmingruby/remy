@@ -1,7 +1,13 @@
 package service
 
-func NewPaymentService() *PaymentService {
-	return &PaymentService{}
+import "github.com/charmingruby/remy-payments/internal/payment/processor"
+
+func NewPaymentService(processor processor.PaymentProcessor) *PaymentService {
+	return &PaymentService{
+		Processor: processor,
+	}
 }
 
-type PaymentService struct{}
+type PaymentService struct {
+	Processor processor.PaymentProcessor
+}

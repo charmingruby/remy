@@ -2,28 +2,37 @@ package service
 
 import (
 	"context"
-	"log"
 
 	common "github.com/charmingruby/remy-common"
 	pb "github.com/charmingruby/remy-common/api"
+	"github.com/google/uuid"
 )
 
-func (s *ServiceRegistry) ValidateOrderService(ctx context.Context, input *pb.CreateOrderRequest) error {
+func (s *ServiceRegistry) ValidateOrderService(ctx context.Context, input *pb.CreateOrderRequest) ([]*pb.Item, error) {
 	if len(input.Items) == 0 {
-		return common.NewNoItemsErr()
+		return nil, common.NewNoItemsErr()
 	}
 
 	mergedItems := mergeItemsQuantities(input.Items)
-	log.Println(mergedItems)
 
-	return nil
+	// temporary
+	var itemsWithPrice []*pb.Item
+	for _, i := range mergedItems {
+		itemsWithPrice = append(itemsWithPrice, &pb.Item{
+			Id:       uuid.NewString(),
+			PriceId:  "price_1Pji1mGJRyNYkOQGwj2xSuZj",
+			Quantity: i.Quantity,
+		})
+	}
+
+	return itemsWithPrice, nil
 }
 
 func mergeItemsQuantities(items []*pb.ItemWithQuantity) []*pb.ItemWithQuantity {
-	merged := make([]*pb.ItemWithQuantity, 0)
+	merged := []*pb.ItemWithQuantity{}
 
 	for _, item := range items {
-		found := false
+		var found bool = false
 
 		for _, finalItem := range merged {
 			if finalItem.Id == item.Id {
@@ -31,10 +40,10 @@ func mergeItemsQuantities(items []*pb.ItemWithQuantity) []*pb.ItemWithQuantity {
 				found = true
 				break
 			}
+		}
 
-			if !found {
-				merged = append(merged, item)
-			}
+		if !found {
+			merged = append(merged, item)
 		}
 	}
 

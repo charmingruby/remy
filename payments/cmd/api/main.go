@@ -5,13 +5,17 @@ import (
 	"log"
 	"time"
 
+	_ "github.com/joho/godotenv/autoload"
+
 	common "github.com/charmingruby/remy-common"
 	"github.com/charmingruby/remy-common/broker"
 	"github.com/charmingruby/remy-common/discovery"
 	"github.com/charmingruby/remy-common/discovery/consul"
 	"github.com/charmingruby/remy-payments/internal/common/server"
 	"github.com/charmingruby/remy-payments/internal/payment"
+	stripeProcessor "github.com/charmingruby/remy-payments/internal/payment/processor/stripe"
 	"github.com/charmingruby/remy-payments/internal/payment/queue/rabbitmq"
+	"github.com/stripe/stripe-go/v78"
 )
 
 var (
@@ -22,6 +26,8 @@ var (
 	amqpPassword = common.EnvString("RABBITMQ_PASSWORD", "guest")
 	amqpHost     = common.EnvString("RABBITMQ_HOST", "localhost")
 	amqpPort     = common.EnvString("RABBITMQ_PORT", "5672")
+	stripeAPIKey = common.EnvString("STRIPE_API_KEY", "")
+	gatewayAddr  = common.EnvString("GATEWAY_ADDR", "http://localhost:8080")
 )
 
 func main() {
@@ -48,6 +54,9 @@ func main() {
 	}()
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
+	// stripe setup
+	stripe.Key = stripeAPIKey
+
 	// broker conn
 	ch, close := broker.Connect(amqpUser, amqpPassword, amqpHost, amqpPort)
 	defer func() {
@@ -55,7 +64,8 @@ func main() {
 		ch.Close()
 	}()
 
-	paymentSvc := payment.NewPaymentService()
+	paymentProcessor := stripeProcessor.NewProcessor(gatewayAddr)
+	paymentSvc := payment.NewPaymentService(paymentProcessor)
 
 	rabbitMQConsumer := rabbitmq.NewConsumer(paymentSvc)
 

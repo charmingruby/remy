@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	_ "github.com/joho/godotenv/autoload"
+
 	common "github.com/charmingruby/remy-common"
 	"github.com/charmingruby/remy-common/broker"
 	"github.com/charmingruby/remy-common/discovery"

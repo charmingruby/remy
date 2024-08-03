@@ -7,5 +7,12 @@ import (
 )
 
 func (s *PaymentService) CreatePayment(ctx context.Context, req *pb.Order) (string, error) {
-	return "", nil
+	link, err := s.Processor.CreatePaymentLink(req)
+	if err != nil {
+		return "", err
+	}
+
+	// update the order with the link
+
+	return link, nil
 }
