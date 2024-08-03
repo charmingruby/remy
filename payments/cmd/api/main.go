@@ -10,6 +10,8 @@ import (
 	"github.com/charmingruby/remy-common/discovery"
 	"github.com/charmingruby/remy-common/discovery/consul"
 	"github.com/charmingruby/remy-payments/internal/common/server"
+	"github.com/charmingruby/remy-payments/internal/payment"
+	"github.com/charmingruby/remy-payments/internal/payment/queue/rabbitmq"
 )
 
 var (
@@ -23,6 +25,7 @@ var (
 )
 
 func main() {
+	// service discovery
 	registry, err := consul.NewRegistry(consulAddr, serviceName)
 	if err != nil {
 		panic(err)
@@ -45,12 +48,20 @@ func main() {
 	}()
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
+	// broker conn
 	ch, close := broker.Connect(amqpUser, amqpPassword, amqpHost, amqpPort)
 	defer func() {
 		close()
 		ch.Close()
 	}()
 
+	paymentSvc := payment.NewPaymentService()
+
+	rabbitMQConsumer := rabbitmq.NewConsumer(paymentSvc)
+
+	go rabbitMQConsumer.Listen(ch)
+
+	// grpc server
 	server := server.NewServer(grpcAddr)
 
 	listener, err := server.Run()
