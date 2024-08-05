@@ -13,7 +13,7 @@ import (
 	"github.com/charmingruby/remy-common/discovery/consul"
 	"github.com/charmingruby/remy-orders/internal/common/server"
 	"github.com/charmingruby/remy-orders/internal/order"
-	"github.com/charmingruby/remy-orders/internal/order/database/mongo_repository"
+	"github.com/charmingruby/remy-orders/internal/order/database/inmemory_repository"
 )
 
 var (
@@ -56,7 +56,7 @@ func main() {
 	}()
 
 	server := server.NewServer(grpcAddr)
-	orderRepository := mongo_repository.NewOrderMongoRepository()
+	orderRepository := inmemory_repository.NewOrderInMemoryRepository()
 	orderService := order.NewServiceRegistry(orderRepository)
 	order.NewGRPCHandler(server.GRPCServer, orderService, ch)
 

@@ -20,4 +20,5 @@ type Handler struct {
 
 func (h *Handler) Register() {
 	h.mux.HandleFunc("POST /api/customers/{customerID}/orders", h.handleCreateOrder)
+	h.mux.HandleFunc("GET /api/customers/{customerID}/orders/{orderID}", h.handleGetOrder)
 }

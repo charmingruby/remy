@@ -18,7 +18,7 @@ func NewGRPCGateway(registry discovery.Registry) *gateway {
 	}
 }
 
-func (g *gateway) CreateOrderService(ctx context.Context, req *pb.CreateOrderRequest) (*pb.Order, error) {
+func (g *gateway) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest) (*pb.Order, error) {
 	conn, err := discovery.ServiceConnection(ctx, "orders", g.registry)
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
@@ -37,4 +37,17 @@ func (g *gateway) CreateOrderService(ctx context.Context, req *pb.CreateOrderReq
 	}
 
 	return order, nil
+}
+func (g *gateway) GetOrder(ctx context.Context, orderID, customerID string) (*pb.Order, error) {
+	conn, err := discovery.ServiceConnection(ctx, "orders", g.registry)
+	if err != nil {
+		log.Fatalf("Failed to dial server: %v", err)
+	}
+
+	c := pb.NewOrderServiceClient(conn)
+
+	return c.GetOrder(ctx, &pb.GetOrderRequest{
+		OrderID:    orderID,
+		CustomerID: customerID,
+	})
 }

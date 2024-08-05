@@ -21,7 +21,12 @@ type Stripe struct {
 
 func (p *Stripe) CreatePaymentLink(order *pb.Order) (string, error) {
 	log.Printf("Creating payment link for order %v", order)
-	gatewaySuccessURL := fmt.Sprintf("%s/success.html", p.GatewayAddr) // not implemented
+	gatewaySuccessURL := fmt.Sprintf("%s/success.html?customerID=%s&orderID=%s",
+		p.GatewayAddr,
+		order.CustomerID,
+		order.ID,
+	)
+	gatewayCancelURL := fmt.Sprintf("%s/cancel.html", p.GatewayAddr)
 
 	items := []*stripe.CheckoutSessionLineItemParams{}
 	for _, item := range order.Items {
@@ -35,6 +40,7 @@ func (p *Stripe) CreatePaymentLink(order *pb.Order) (string, error) {
 		LineItems:  items,
 		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
 		SuccessURL: stripe.String(gatewaySuccessURL),
+		CancelURL:  stripe.String(gatewayCancelURL),
 	}
 
 	result, err := session.New(params)

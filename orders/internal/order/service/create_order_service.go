@@ -4,20 +4,20 @@ import (
 	"context"
 
 	pb "github.com/charmingruby/remy-common/api"
-	"github.com/google/uuid"
 )
 
-func (s *ServiceRegistry) CreateOrderService(ctx context.Context, input *pb.CreateOrderRequest) (*pb.Order, error) {
-	items, err := s.ValidateOrderService(ctx, input)
-	if err != nil {
-		return nil, err
-	}
+func (s *ServiceRegistry) CreateOrderService(
+	ctx context.Context,
+	input *pb.CreateOrderRequest,
+	items []*pb.Item,
+) (*pb.Order, error) {
+	id, err := s.orderRepository.Create(ctx, input, items)
 
 	order := &pb.Order{
-		ID:         uuid.NewString(),
+		ID:         id,
 		CustomerID: input.CustomerID,
-		Items:      items,
 		Status:     "pending",
+		Items:      items,
 	}
 
 	return order, err
