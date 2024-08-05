@@ -4,7 +4,9 @@ go 1.22.3
 
 require (
 	github.com/charmingruby/remy-common v0.0.0-00010101000000-000000000000
+	github.com/joho/godotenv v1.5.1
 	github.com/rabbitmq/amqp091-go v1.10.0
+	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/stripe/stripe-go/v78 v78.12.0
 	google.golang.org/grpc v1.65.0
 )
