@@ -2,11 +2,17 @@ package rest
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	common "github.com/charmingruby/remy-common"
 	pb "github.com/charmingruby/remy-common/api"
 )
+
+type CreaterOrderResponse struct {
+	Order         *pb.Order `json:"order"`
+	RedirectToURL string    `json:"redirect_to_url"`
+}
 
 func (h *Handler) handleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	customerID := r.PathValue("customerID")
@@ -38,7 +44,12 @@ func (h *Handler) handleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.WriteJSON(w, http.StatusCreated, order)
+	res := CreaterOrderResponse{
+		Order:         order,
+		RedirectToURL: fmt.Sprintf("http://localhost:8080/success.html?customerID=%s&orderID=%s", order.CustomerID, order.ID),
+	}
+
+	common.WriteJSON(w, http.StatusCreated, res)
 }
 
 func validateItems(items []*pb.ItemWithQuantity) error {

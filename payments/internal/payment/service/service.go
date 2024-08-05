@@ -1,13 +1,20 @@
 package service
 
-import "github.com/charmingruby/remy-payments/internal/payment/processor"
+import (
+	"github.com/charmingruby/remy-payments/internal/gateway"
+	"github.com/charmingruby/remy-payments/internal/payment/processor"
+)
 
-func NewPaymentService(processor processor.PaymentProcessor) *PaymentService {
+func NewPaymentService(
+	processor processor.PaymentProcessor,
+	ordersGw gateway.OrdersGateway) *PaymentService {
 	return &PaymentService{
-		Processor: processor,
+		Processor:     processor,
+		OrdersGateway: ordersGw,
 	}
 }
 
 type PaymentService struct {
-	Processor processor.PaymentProcessor
+	Processor     processor.PaymentProcessor
+	OrdersGateway gateway.OrdersGateway
 }

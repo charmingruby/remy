@@ -12,7 +12,9 @@ func (s *PaymentService) CreatePayment(ctx context.Context, req *pb.Order) (stri
 		return "", err
 	}
 
-	// update the order with the link
+	if err := s.OrdersGateway.UpdateOrdersAfterPaymentLink(ctx, req.ID, link); err != nil {
+		return "", err
+	}
 
 	return link, nil
 }

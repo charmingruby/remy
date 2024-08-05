@@ -17,6 +17,7 @@ import (
 	"github.com/charmingruby/remy-common/discovery"
 	"github.com/charmingruby/remy-common/discovery/consul"
 	"github.com/charmingruby/remy-payments/internal/common/server"
+	"github.com/charmingruby/remy-payments/internal/gateway"
 	"github.com/charmingruby/remy-payments/internal/payment"
 	stripeProcessor "github.com/charmingruby/remy-payments/internal/payment/processor/stripe"
 	"github.com/charmingruby/remy-payments/internal/payment/queue/rabbitmq"
@@ -73,7 +74,8 @@ func main() {
 	}()
 
 	paymentProcessor := stripeProcessor.NewProcessor(gatewayAddr)
-	paymentSvc := payment.NewPaymentService(paymentProcessor)
+	ordersGateway := gateway.NewGRPCGateway(registry)
+	paymentSvc := payment.NewPaymentService(paymentProcessor, ordersGateway)
 
 	rabbitMQConsumer := rabbitmq.NewConsumer(paymentSvc)
 	go rabbitMQConsumer.Listen(ch)

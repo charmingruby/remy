@@ -25,10 +25,11 @@ func (r *OrderInMemoryRepository) Create(
 	id := uuid.NewString()
 
 	r.items = append(r.items, &pb.Order{
-		ID:         id,
-		CustomerID: p.CustomerID,
-		Status:     "pending",
-		Items:      items,
+		ID:          id,
+		CustomerID:  p.CustomerID,
+		Status:      "pending",
+		Items:       items,
+		PaymentLink: "",
 	})
 
 	return id, nil
@@ -42,4 +43,17 @@ func (r *OrderInMemoryRepository) Get(ctx context.Context, id, customerID string
 	}
 
 	return nil, errors.New("order not found")
+}
+
+func (r *OrderInMemoryRepository) Update(ctx context.Context, id string, input *pb.Order) error {
+	for i, o := range r.items {
+		if o.ID == id {
+			r.items[i].PaymentLink = input.PaymentLink
+			r.items[i].Status = input.Status
+
+			return nil
+		}
+	}
+
+	return errors.New("order not found")
 }

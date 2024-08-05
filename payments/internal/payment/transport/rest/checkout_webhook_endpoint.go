@@ -1,13 +1,18 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	common "github.com/charmingruby/remy-common"
+	pb "github.com/charmingruby/remy-common/api"
+	"github.com/charmingruby/remy-common/broker"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/webhook"
 )
@@ -32,15 +37,34 @@ func (h *Handler) checkoutWebhookEndpoint(w http.ResponseWriter, r *http.Request
 	}
 
 	if event.Type == "payment_intent.succeeded" {
-		var paymentIntent stripe.PaymentIntent
-		err := json.Unmarshal(event.Data.Raw, &paymentIntent)
+		var cs stripe.CheckoutSession
+		err := json.Unmarshal(event.Data.Raw, &cs)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing webhook JSON: %v\n", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		//  publish meessage
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		order := &pb.Order{
+			ID:          cs.Metadata["orderID"],
+			CustomerID:  cs.Metadata["customerID"],
+			Status:      "paid",
+			PaymentLink: "",
+		}
+
+		jsonOrder, _ := json.Marshal(order)
+
+		h.ch.PublishWithContext(ctx, broker.OrderPaidEvent, "", false, false, amqp.Publishing{
+			ContentType:  "application/json",
+			Body:         jsonOrder,
+			DeliveryMode: amqp.Persistent,
+		})
+
+		fmt.Println("Message published order.paid")
+
 		common.WriteJSON(w, http.StatusOK, body)
 		return
 	}
