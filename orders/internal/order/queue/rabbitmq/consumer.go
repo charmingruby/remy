@@ -7,22 +7,27 @@ import (
 
 	pb "github.com/charmingruby/remy-common/api"
 	"github.com/charmingruby/remy-common/broker"
-	"github.com/charmingruby/remy-payments/internal/payment/contract"
+	"github.com/charmingruby/remy-orders/internal/order/contract"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func NewConsumer(paymentSvc contract.PaymentService) *Consumer {
+func NewConsumer(orderSvc contract.OrderService) *Consumer {
 	return &Consumer{
-		PaymentService: paymentSvc,
+		OrderService: orderSvc,
 	}
 }
 
 type Consumer struct {
-	PaymentService contract.PaymentService
+	OrderService contract.OrderService
 }
 
 func (c *Consumer) Listen(ch *amqp.Channel) {
-	q, err := ch.QueueDeclare(broker.OrderCreatedEvent, true, false, false, false, nil)
+	q, err := ch.QueueDeclare("", true, false, true, false, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ch.QueueBind(q.Name, "", broker.OrderPaidEvent, false, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,7 +41,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received Order: %s", string(d.Body))
+			log.Printf("Received message: %s", string(d.Body))
 
 			order := &pb.Order{}
 			if err := json.Unmarshal(d.Body, order); err != nil {
@@ -45,9 +50,9 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 				continue
 			}
 
-			paymentLink, err := c.PaymentService.CreatePayment(context.Background(), order)
+			_, err := c.OrderService.UpdateOrderService(context.Background(), order)
 			if err != nil {
-				log.Printf("failed to create payment: %v", err)
+				log.Printf("failed to update order: %v", order)
 
 				if err := broker.HandleRetry(ch, &d); err != nil {
 					log.Printf("Error handling retry: %v", err)
@@ -58,7 +63,7 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 				continue
 			}
 
-			log.Printf("Payment link created %s", paymentLink)
+			log.Printf("Order have been updated")
 			d.Ack(false)
 		}
 	}()
